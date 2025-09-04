@@ -1,0 +1,381 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Cosmic base colors */
+    --background: 240 15% 5%;
+    --foreground: 45 100% 85%;
+
+    --card: 240 12% 8%;
+    --card-foreground: 45 100% 85%;
+
+    --popover: 240 12% 8%;
+    --popover-foreground: 45 100% 85%;
+
+    /* Afro-futuristic primary palette */
+    --primary: 270 100% 70%;
+    --primary-foreground: 240 15% 5%;
+    --primary-glow: 270 100% 85%;
+
+    --secondary: 45 100% 65%;
+    --secondary-foreground: 240 15% 5%;
+
+    --muted: 240 8% 15%;
+    --muted-foreground: 45 50% 60%;
+
+    --accent: 195 100% 65%;
+    --accent-foreground: 240 15% 5%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 45 100% 85%;
+
+    --border: 240 8% 20%;
+    --input: 240 8% 15%;
+    --ring: 270 100% 70%;
+
+    /* Synthwave neon colors */
+    --neon-magenta: 320 100% 75%;
+    --neon-blue: 195 100% 65%;
+    --neon-purple: 270 100% 70%;
+    --neon-coral: 345 100% 70%;
+    --neon-orange: 25 100% 65%;
+    --neon-cyan: 180 100% 70%;
+    --electric-lavender: 255 80% 85%;
+    
+    /* Cosmic-specific colors */
+    --cosmic-purple: 270 100% 70%;
+    --cosmic-gold: 45 100% 65%;
+    --cosmic-blue: 195 100% 65%;
+    --cosmic-pink: 320 100% 75%;
+    --cosmic-cyan: 180 100% 70%;
+    
+    /* Synthwave gradients */
+    --gradient-cosmic: linear-gradient(135deg, hsl(270 100% 70%), hsl(320 100% 75%), hsl(45 100% 65%));
+    --gradient-neon-title: linear-gradient(45deg, hsl(320 100% 75%), hsl(195 100% 65%), hsl(270 100% 70%));
+    --gradient-energy: linear-gradient(90deg, hsl(195 100% 65%), hsl(180 100% 70%));
+    --gradient-pulse: linear-gradient(45deg, hsl(270 100% 70%), hsl(270 100% 85%));
+    --gradient-synthwave: linear-gradient(135deg, hsl(345 100% 70%), hsl(270 100% 70%));
+    
+    /* Neon glows and shadows */
+    --shadow-cosmic: 0 0 30px hsl(270 100% 70% / 0.3);
+    --shadow-energy: 0 0 20px hsl(195 100% 65% / 0.4);
+    --shadow-gold: 0 0 25px hsl(45 100% 65% / 0.3);
+    --glow-neon-magenta: 0 0 20px hsl(320 100% 75% / 0.8), 0 0 40px hsl(320 100% 75% / 0.4);
+    --glow-neon-blue: 0 0 20px hsl(195 100% 65% / 0.8), 0 0 40px hsl(195 100% 65% / 0.4);
+    --glow-neon-coral: 0 0 15px hsl(345 100% 70% / 0.6), 0 0 30px hsl(345 100% 70% / 0.3);
+    --glow-soft-white: 0 0 10px hsl(255 80% 85% / 0.5);
+    
+    /* Animations */
+    --transition-cosmic: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --animation-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground overflow-hidden;
+    background: var(--gradient-cosmic);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  /* Cosmic UI Components */
+  .cosmic-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg;
+    box-shadow: var(--shadow-cosmic);
+  }
+  
+  .cosmic-button {
+    @apply bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium;
+    background: var(--gradient-pulse);
+    box-shadow: var(--shadow-cosmic);
+    transition: var(--transition-cosmic);
+  }
+  
+  .cosmic-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 40px hsl(270 100% 70% / 0.5);
+  }
+
+  /* Synthwave Text Styles */
+  .synthwave-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    background: var(--gradient-neon-title);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: var(--glow-neon-magenta);
+    animation: gradient-shift 3s ease-in-out infinite, title-pulse 2s ease-in-out infinite;
+  }
+
+  .synthwave-subtitle {
+    font-family: 'Exo 2', sans-serif;
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: hsl(var(--neon-coral));
+    text-shadow: var(--glow-neon-coral);
+    animation: flicker 4s linear infinite;
+  }
+
+  .synthwave-tagline {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 400;
+    color: hsl(var(--electric-lavender));
+    text-shadow: var(--glow-soft-white);
+    animation: typewriter 3s ease-in-out;
+  }
+
+  .synthwave-narrative {
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 400;
+    line-height: 1.6;
+    color: hsl(var(--electric-lavender));
+    background: hsl(var(--background) / 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--neon-cyan) / 0.3);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-shadow: 
+      0 0 10px hsl(var(--electric-lavender) / 0.8),
+      0 0 20px hsl(var(--neon-cyan) / 0.4),
+      2px 2px 4px hsl(0 0% 0% / 0.8);
+    box-shadow: 
+      0 0 30px hsl(var(--neon-cyan) / 0.2),
+      inset 0 0 20px hsl(var(--background) / 0.5);
+    animation: fade-up 2s ease-out 0.5s both;
+  }
+
+  .synthwave-narrative:hover {
+    transform: scale(1.02);
+    border-color: hsl(var(--neon-cyan) / 0.5);
+    box-shadow: 
+      0 0 40px hsl(var(--neon-cyan) / 0.3),
+      inset 0 0 25px hsl(var(--background) / 0.6);
+    transition: var(--transition-cosmic);
+  }
+
+  .synthwave-button {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    background: var(--gradient-synthwave);
+    border: 2px solid hsl(var(--neon-magenta));
+    text-shadow: var(--glow-neon-magenta);
+    box-shadow: var(--glow-neon-magenta), inset 0 0 20px hsl(var(--neon-magenta) / 0.2);
+    transition: var(--transition-cosmic);
+    animation: button-pulse 2s ease-in-out infinite;
+  }
+
+  .synthwave-button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: var(--glow-neon-magenta), 0 10px 30px hsl(var(--neon-magenta) / 0.4);
+    animation: button-glow 0.3s ease-in-out;
+  }
+  
+  .energy-orb {
+    @apply w-4 h-4 rounded-full;
+    background: var(--gradient-energy);
+    box-shadow: var(--shadow-energy);
+    animation: var(--animation-pulse);
+  }
+  
+  .beat-indicator {
+    @apply absolute w-6 h-6 rounded-full;
+    background: var(--gradient-cosmic);
+    box-shadow: var(--shadow-gold);
+  }
+  
+  /* Game-specific animations */
+  .pulse-beat {
+    animation: pulse-beat 0.6s cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  
+  .screen-flash {
+    animation: screen-flash 0.2s ease-out;
+  }
+  
+  .camera-shake {
+    animation: camera-shake 0.3s ease-in-out;
+  }
+}
+
+@layer utilities {
+  .text-cosmic-gradient {
+    background: var(--gradient-cosmic);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .border-cosmic {
+    border-image: var(--gradient-cosmic) 1;
+  }
+}
+
+/* Keyframe animations */
+@keyframes pulse-beat {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes screen-flash {
+  0% { background-color: transparent; }
+  50% { background-color: hsl(270 100% 70% / 0.1); }
+  100% { background-color: transparent; }
+}
+
+@keyframes camera-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Synthwave animations */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes title-pulse {
+  0%, 100% { 
+    text-shadow: 
+      0 0 20px hsl(320 100% 75% / 0.8), 
+      0 0 40px hsl(320 100% 75% / 0.4),
+      0 0 60px hsl(320 100% 75% / 0.2);
+  }
+  50% { 
+    text-shadow: 
+      0 0 30px hsl(320 100% 75% / 1), 
+      0 0 60px hsl(320 100% 75% / 0.6),
+      0 0 80px hsl(320 100% 75% / 0.3);
+  }
+}
+
+@keyframes flicker {
+  0%, 98%, 100% { opacity: 1; }
+  1%, 3% { opacity: 0.8; }
+  2% { opacity: 0.9; }
+}
+
+@keyframes typewriter {
+  0% { 
+    opacity: 0; 
+    transform: translateY(10px);
+  }
+  50% { 
+    opacity: 0.5; 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  0% { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  100% { 
+    opacity: 0.9; 
+    transform: translateY(0);
+  }
+}
+
+@keyframes button-pulse {
+  0%, 100% { 
+    box-shadow: 
+      0 0 20px hsl(320 100% 75% / 0.8), 
+      0 0 40px hsl(320 100% 75% / 0.4),
+      inset 0 0 20px hsl(320 100% 75% / 0.2);
+  }
+  50% { 
+    box-shadow: 
+      0 0 30px hsl(320 100% 75% / 1), 
+      0 0 60px hsl(320 100% 75% / 0.6),
+      inset 0 0 30px hsl(320 100% 75% / 0.3);
+  }
+}
+
+@keyframes button-glow {
+  0% { 
+    transform: translateY(-3px) scale(1.05);
+  }
+  50% { 
+    transform: translateY(-5px) scale(1.08);
+  }
+  100% { 
+    transform: translateY(-3px) scale(1.05);
+  }
+}
