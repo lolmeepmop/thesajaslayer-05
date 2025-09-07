@@ -133,9 +133,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
 
             {/* Narrative description with tech font */}
             <div className="synthwave-narrative max-w-2xl mx-auto space-y-2 text-lg">
-              <p>Select from our curated collection of electronic beats.</p>
-              <p>From K-pop bangers to synthwave classics.</p>
-              <p>Each song offers a unique rhythmic challenge.</p>
+              <p>Battle through cursed rhythms and corrupted solos.</p>
+              <p>You are Nova, the last sync slayer!</p>
+              <p>Only you can restore harmony to the all the stages.</p>
             </div>
 
             {/* Start button with synthwave styling */}
