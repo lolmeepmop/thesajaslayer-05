@@ -100,9 +100,19 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
     try {
       setGamePhase('analyzing');
       
-      // Fetch the audio file
-      const response = await fetch(preselectedSong.musicUrl);
-      if (!response.ok) throw new Error('Failed to fetch audio');
+      // Try local URL first, then fallback to GitHub if needed
+      let audioUrl = preselectedSong.musicUrl;
+      let response = await fetch(audioUrl);
+      
+      if (!response.ok) {
+        // Fallback to GitHub assets if local file not found
+        const githubBase = import.meta.env.VITE_SONG_ASSETS_BASE;
+        if (githubBase) {
+          audioUrl = `${githubBase}/${preselectedSong.musicUrl}`;
+          response = await fetch(audioUrl);
+        }
+        if (!response.ok) throw new Error('Failed to fetch audio from both local and GitHub');
+      }
       
       const blob = await response.blob();
       const file = new File([blob], `${preselectedSong.name}.mp3`, { type: 'audio/mpeg' });
@@ -112,8 +122,8 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
       const analysis = await audioAnalyzer.current!.analyzeAudio(audioBuffer);
       
       // Create audio element for playback
-      const audioUrl = URL.createObjectURL(file);
-      const audio = new Audio(audioUrl);
+      const audioObjectUrl = URL.createObjectURL(file);
+      const audio = new Audio(audioObjectUrl);
       audio.volume = volume;
       audioElement.current = audio;
       

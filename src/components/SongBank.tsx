@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Play, Search, Filter, Home, Clock, Zap } from 'lucide-react';
 import { Input } from './ui/input';
+import { ScrollArea } from './ui/scroll-area';
 import { Song, SONG_BANK } from '../types/song';
 import { DifficultyLevel } from '../types/difficulty';
 
@@ -121,69 +122,71 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
           </div>
         </div>
 
-        {/* Songs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {filteredSongs.map((song) => (
-            <div
-              key={song.id}
-              className="cosmic-card p-4 hover:scale-105 transition-all duration-300 cursor-pointer group"
-              onClick={() => handleSongSelect(song)}
-            >
-              {/* Song Artwork */}
-              <div className="relative mb-4 overflow-hidden rounded-lg">
-                <img
-                  src={song.imagePath}
-                  alt={song.name}
-                  className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300" />
-                
-                {/* Play button overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="bg-primary/90 backdrop-blur-sm rounded-full p-3">
-                    <Play className="h-6 w-6 text-primary-foreground fill-current" />
+        {/* Songs Grid with Scroll Area */}
+        <ScrollArea className="h-[calc(100vh-260px)] px-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto pb-8">
+            {filteredSongs.map((song) => (
+              <div
+                key={song.id}
+                className="cosmic-card p-4 hover:scale-105 transition-all duration-300 cursor-pointer group"
+                onClick={() => handleSongSelect(song)}
+              >
+                {/* Song Artwork */}
+                <div className="relative mb-4 overflow-hidden rounded-lg">
+                  <img
+                    src={song.imagePath}
+                    alt={song.name}
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300" />
+                  
+                  {/* Play button overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="bg-primary/90 backdrop-blur-sm rounded-full p-3">
+                      <Play className="h-6 w-6 text-primary-foreground fill-current" />
+                    </div>
                   </div>
-                </div>
 
-                {/* Category badge */}
-                <div className="absolute top-2 right-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    song.category === 'bonus' 
-                      ? 'bg-neon-coral/80 text-white' 
-                      : 'bg-neon-blue/80 text-white'
-                  }`}>
-                    {song.category === 'bonus' ? 'BONUS' : 'MAIN'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Song Info */}
-              <div className="space-y-2">
-                <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-                  {song.name}
-                </h3>
-                
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{song.artist}</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {song.estimatedDuration}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-accent">{song.genre}</span>
-                  <div className="flex items-center gap-1">
-                    <Zap className="h-3 w-3" />
-                    <span className={`text-sm font-medium ${getDifficultyColor(song.difficulty)}`}>
-                      {song.difficulty}
+                  {/* Category badge */}
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      song.category === 'bonus' 
+                        ? 'bg-neon-coral/80 text-white' 
+                        : 'bg-neon-blue/80 text-white'
+                    }`}>
+                      {song.category === 'bonus' ? 'BONUS' : 'MAIN'}
                     </span>
                   </div>
                 </div>
+
+                {/* Song Info */}
+                <div className="space-y-2">
+                  <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                    {song.name}
+                  </h3>
+                  
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{song.artist}</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {song.estimatedDuration}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-accent">{song.genre}</span>
+                    <div className="flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      <span className={`text-sm font-medium ${getDifficultyColor(song.difficulty)}`}>
+                        {song.difficulty}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
 
         {/* No results message */}
         {filteredSongs.length === 0 && (
