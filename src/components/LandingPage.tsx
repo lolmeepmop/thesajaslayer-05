@@ -18,7 +18,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
 
   useEffect(() => {
     // Initialize background music
-    const audio = new Audio('/start-page-audio-2.mp3');
+    const audio = new Audio('/start%20page%20audio%202.mp3');
     audio.loop = true;
     audio.volume = 0.3;
     audioRef.current = audio;
