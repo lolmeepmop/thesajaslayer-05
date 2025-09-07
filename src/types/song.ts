@@ -8,9 +8,6 @@ export interface Song {
   genre?: string;
   estimatedDuration?: string;
   difficulty?: 'Easy' | 'Medium' | 'Hard';
-  stageNumber?: number;
-  unlockRequirement?: string; // ID of stage that must be completed to unlock this
-  githubUrl?: string; // For loading from GitHub assets
 }
 
 export const SONG_BANK: Song[] = [
