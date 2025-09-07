@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { Song, SONG_BANK } from '../types/song';
 import { DifficultyLevel } from '../types/difficulty';
+import { SongPreview } from './SongPreview';
 
 interface SongBankProps {
   onSongSelected: (song: Song, difficulty: DifficultyLevel) => void;
@@ -15,6 +16,7 @@ interface SongBankProps {
 export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, difficulty }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'stage' | 'bonus'>('all');
+  const [currentPreviewSong, setCurrentPreviewSong] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Filter songs based on search and category
@@ -28,11 +30,12 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
 
   const handleSongSelect = (song: Song) => {
     // Stop any preview audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    setCurrentPreviewSong(null);
     onSongSelected(song, difficulty);
+  };
+
+  const handlePreviewToggle = (songId: string) => {
+    setCurrentPreviewSong(currentPreviewSong === songId ? null : songId);
   };
 
   const getDifficultyColor = (songDifficulty?: string) => {
@@ -47,9 +50,7 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
   useEffect(() => {
     // Cleanup audio on unmount
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      setCurrentPreviewSong(null);
     };
   }, []);
 
@@ -145,6 +146,16 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
                     <div className="bg-primary/90 backdrop-blur-sm rounded-full p-3">
                       <Play className="h-6 w-6 text-primary-foreground fill-current" />
                     </div>
+                  </div>
+
+                  {/* Preview button */}
+                  <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <SongPreview
+                      musicUrl={song.musicUrl}
+                      isPlaying={currentPreviewSong === song.id}
+                      onPlayToggle={() => handlePreviewToggle(song.id)}
+                      className="bg-background/80 backdrop-blur-sm text-foreground hover:bg-background"
+                    />
                   </div>
 
                   {/* Category badge */}
