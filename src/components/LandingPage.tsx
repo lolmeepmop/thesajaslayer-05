@@ -17,11 +17,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Initialize background music with preloading
-    const audio = new Audio('/start-page-audio-2.mp3');
+    // Initialize background music
+    const audio = new Audio('/start%20page%20audio%202.mp3');
     audio.loop = true;
     audio.volume = 0.3;
-    audio.preload = 'metadata';
     audioRef.current = audio;
 
     // Attempt to play background music (with autoplay restrictions handling)
@@ -30,27 +29,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
       playPromise
         .then(() => {
           console.log('Background music started');
-          setIsMuted(false);
         })
         .catch(() => {
           console.log('Autoplay prevented - user interaction required');
           setIsMuted(true);
-          
-          // Add user interaction listener to resume audio
-          const handleUserInteraction = () => {
-            if (audioRef.current && isMuted) {
-              audioRef.current.play().then(() => {
-                setIsMuted(false);
-                console.log('Background music resumed after user interaction');
-              });
-            }
-            // Remove listeners after first interaction
-            document.removeEventListener('click', handleUserInteraction);
-            document.removeEventListener('keydown', handleUserInteraction);
-          };
-          
-          document.addEventListener('click', handleUserInteraction);
-          document.addEventListener('keydown', handleUserInteraction);
         });
     }
 

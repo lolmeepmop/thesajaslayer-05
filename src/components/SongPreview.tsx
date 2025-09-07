@@ -23,7 +23,7 @@ export const SongPreview: React.FC<SongPreviewProps> = ({
     if (!audioRef.current) {
       audioRef.current = new Audio();
       audioRef.current.volume = 0.3;
-      audioRef.current.preload = 'metadata'; // Preload metadata for faster start
+      audioRef.current.preload = 'metadata';
       
       audioRef.current.addEventListener('loadstart', () => setIsLoading(true));
       audioRef.current.addEventListener('canplay', () => {
@@ -42,10 +42,9 @@ export const SongPreview: React.FC<SongPreviewProps> = ({
       });
     }
 
-    // Update audio source and preload metadata
+    // Update audio source
     if (audioRef.current.src !== musicUrl) {
       audioRef.current.src = musicUrl;
-      audioRef.current.load(); // Force load metadata
     }
 
     return () => {

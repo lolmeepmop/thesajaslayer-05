@@ -84,22 +84,11 @@ const Index = () => {
   }
 
   if (currentMode === 'song-game' && selectedSong) {
-    return (
-      <RhythmGame 
-        difficulty={selectedDifficulty} 
-        preselectedSong={selectedSong}
-        onBack={() => setCurrentMode('song-bank')}
-      />
-    );
+    return <RhythmGame difficulty={selectedDifficulty} preselectedSong={selectedSong} />;
   }
 
   if (currentMode === 'freeplay') {
-    return (
-      <RhythmGame 
-        difficulty={selectedDifficulty}
-        onBack={() => setCurrentMode('landing')}
-      />
-    );
+    return <RhythmGame difficulty={selectedDifficulty} />;
   }
 
   return null;
