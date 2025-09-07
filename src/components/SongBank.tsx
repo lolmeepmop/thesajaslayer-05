@@ -1,23 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Play, Search, Filter, Home, Clock, Zap } from 'lucide-react';
+import { Play, Search, Filter, Home, Clock, Zap, Lock } from 'lucide-react';
 import { Input } from './ui/input';
-import { Song, SONG_BANK } from '../types/song';
+import { Song } from '../types/song';
 import { DifficultyLevel } from '../types/difficulty';
+import { useSongConfiguration } from '@/hooks/useSongConfiguration';
+import { LoadingProgress } from './LoadingProgress';
 
 interface SongBankProps {
   onSongSelected: (song: Song, difficulty: DifficultyLevel) => void;
   onBack: () => void;
   difficulty: DifficultyLevel;
+  completedStages?: string[];
 }
 
-export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, difficulty }) => {
+export const SongBank: React.FC<SongBankProps> = ({ 
+  onSongSelected, 
+  onBack, 
+  difficulty, 
+  completedStages = [] 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'stage' | 'bonus'>('all');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  const { songs, loading, error } = useSongConfiguration(completedStages);
 
   // Filter songs based on search and category
-  const filteredSongs = SONG_BANK.filter(song => {
+  const filteredSongs = songs.filter(song => {
     const matchesSearch = song.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          song.artist?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          song.genre?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -26,12 +36,24 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
   });
 
   const handleSongSelect = (song: Song) => {
+    // Don't allow selection of locked songs
+    if (isSongLocked(song)) return;
+    
     // Stop any preview audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
     onSongSelected(song, difficulty);
+  };
+
+  const isSongLocked = (song: Song): boolean => {
+    if (song.category === 'bonus') return false;
+    if (song.stageNumber === 1) return false;
+    if (song.unlockRequirement) {
+      return !completedStages.includes(song.unlockRequirement);
+    }
+    return false;
   };
 
   const getDifficultyColor = (songDifficulty?: string) => {
@@ -51,6 +73,32 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
       }
     };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-neon-purple via-electric-blue to-cosmic-purple flex items-center justify-center">
+        <LoadingProgress 
+          visible={true}
+          stage="loading"
+          progress={0}
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-neon-purple via-electric-blue to-cosmic-purple flex items-center justify-center">
+        <div className="cosmic-card p-8 text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Error Loading Songs</h2>
+          <p className="text-electric-lavender mb-4">{error}</p>
+          <Button onClick={onBack} variant="outline">
+            ← Back to Menu
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -123,66 +171,105 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
 
         {/* Songs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {filteredSongs.map((song) => (
-            <div
-              key={song.id}
-              className="cosmic-card p-4 hover:scale-105 transition-all duration-300 cursor-pointer group"
-              onClick={() => handleSongSelect(song)}
-            >
-              {/* Song Artwork */}
-              <div className="relative mb-4 overflow-hidden rounded-lg">
-                <img
-                  src={song.imagePath}
-                  alt={song.name}
-                  className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300" />
-                
-                {/* Play button overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="bg-primary/90 backdrop-blur-sm rounded-full p-3">
-                    <Play className="h-6 w-6 text-primary-foreground fill-current" />
-                  </div>
-                </div>
+          {filteredSongs.map((song) => {
+            const isLocked = isSongLocked(song);
+            
+            return (
+              <div
+                key={song.id}
+                className={`cosmic-card p-4 transition-all duration-300 group ${
+                  isLocked 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:scale-105 cursor-pointer'
+                }`}
+                onClick={() => handleSongSelect(song)}
+              >
+                {/* Song Artwork */}
+                <div className="relative mb-4 overflow-hidden rounded-lg">
+                  <img
+                    src={song.imagePath}
+                    alt={song.name}
+                    className={`w-full h-48 object-cover transition-transform duration-300 ${
+                      isLocked ? 'grayscale' : 'group-hover:scale-110'
+                    }`}
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300" />
+                  
+                  {/* Lock overlay for locked songs */}
+                  {isLocked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <Lock className="h-12 w-12 text-white" />
+                    </div>
+                  )}
+                  
+                  {/* Play button overlay */}
+                  {!isLocked && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="bg-primary/90 backdrop-blur-sm rounded-full p-3">
+                        <Play className="h-6 w-6 text-primary-foreground fill-current" />
+                      </div>
+                    </div>
+                  )}
 
-                {/* Category badge */}
-                <div className="absolute top-2 right-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    song.category === 'bonus' 
-                      ? 'bg-neon-coral/80 text-white' 
-                      : 'bg-neon-blue/80 text-white'
-                  }`}>
-                    {song.category === 'bonus' ? 'BONUS' : 'MAIN'}
-                  </span>
-                </div>
-              </div>
+                  {/* Stage number badge */}
+                  {song.stageNumber && (
+                    <div className="absolute top-2 left-2">
+                      <span className="px-2 py-1 rounded-full text-xs font-bold bg-black/60 text-white">
+                        Stage {song.stageNumber}
+                      </span>
+                    </div>
+                  )}
 
-              {/* Song Info */}
-              <div className="space-y-2">
-                <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-                  {song.name}
-                </h3>
-                
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{song.artist}</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {song.estimatedDuration}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-accent">{song.genre}</span>
-                  <div className="flex items-center gap-1">
-                    <Zap className="h-3 w-3" />
-                    <span className={`text-sm font-medium ${getDifficultyColor(song.difficulty)}`}>
-                      {song.difficulty}
+                  {/* Category badge */}
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      song.category === 'bonus' 
+                        ? 'bg-neon-coral/80 text-white' 
+                        : 'bg-neon-blue/80 text-white'
+                    }`}>
+                      {song.category === 'bonus' ? 'BONUS' : 'MAIN'}
                     </span>
                   </div>
                 </div>
+
+                {/* Song Info */}
+                <div className="space-y-2">
+                  <h3 className={`font-bold text-lg transition-colors ${
+                    isLocked 
+                      ? 'text-muted-foreground' 
+                      : 'text-foreground group-hover:text-primary'
+                  }`}>
+                    {song.name}
+                  </h3>
+                  
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{song.artist}</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {song.estimatedDuration}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-accent">{song.genre}</span>
+                    <div className="flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      <span className={`text-sm font-medium ${getDifficultyColor(song.difficulty)}`}>
+                        {song.difficulty}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Unlock requirement message */}
+                  {isLocked && song.unlockRequirement && (
+                    <p className="text-xs text-red-400 mt-2">
+                      Complete Stage {song.unlockRequirement.replace('stage', '')} to unlock
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* No results message */}
