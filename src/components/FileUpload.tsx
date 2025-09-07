@@ -1,12 +1,14 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, Music, Loader2 } from 'lucide-react';
+import { Upload, Music, Loader2, ArrowLeft } from 'lucide-react';
+import { Button } from './ui/button';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
   isProcessing: boolean;
+  onBack?: () => void;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, onBack }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +59,19 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessi
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8">
+      {onBack && (
+        <div className="absolute top-4 left-4 z-10">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            size="sm"
+            className="cosmic-button"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Menu
+          </Button>
+        </div>
+      )}
       <div className="cosmic-card p-8 max-w-2xl w-full text-center">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-cosmic-gradient mb-4">
