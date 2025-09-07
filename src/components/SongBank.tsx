@@ -172,21 +172,9 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
 
                 {/* Song Info */}
                 <div className="space-y-2">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-                      {song.name}
-                    </h3>
-                    {song.category === 'stage' && (
-                      <p className="text-xs text-electric-cyan/80 font-mono uppercase tracking-wide">
-                        Stage {song.id.replace('stage', '')}
-                      </p>
-                    )}
-                    {song.category === 'bonus' && (
-                      <p className="text-xs text-neon-coral/80 font-mono uppercase tracking-wide">
-                        Bonus Track {song.id.replace('bonus', '')}
-                      </p>
-                    )}
-                  </div>
+                  <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                    {song.name}
+                  </h3>
                   
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>{song.artist}</span>
