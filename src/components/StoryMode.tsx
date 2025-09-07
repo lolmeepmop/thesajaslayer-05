@@ -137,144 +137,296 @@ export const StoryMode: React.FC<StoryModeProps> = ({ onExitStoryMode, difficult
     };
   }, []);
 
-  // Load and analyze stage audio with blob-based loading
+  // Multi-strategy audio loading function
   const loadStage = useCallback(async (stageIndex: number) => {
     if (!audioAnalyzer.current || stageIndex >= STORY_STAGES.length) return;
 
     const stage = STORY_STAGES[stageIndex];
     setGamePhase('loading');
     setLoadError(null);
+    
+    console.log(`[StoryMode] Loading stage: ${stage.name}`);
 
     try {
+      // Validate stage configuration
+      if (!stage.musicUrl) {
+        throw new Error(`No music URL specified for stage: ${stage.name}`);
+      }
+
       // Create absolute URL with cache bust in preview mode
       const isPreviewMode = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('preview');
       const cacheBust = isPreviewMode ? `?v=${Date.now()}` : '';
       const absoluteUrl = new URL(stage.musicUrl + cacheBust, window.location.origin).toString();
       
-      console.log(`Loading stage ${stage.name} from: ${absoluteUrl}`);
+      console.log(`[StoryMode] Target URL: ${absoluteUrl}`);
       
-      // Validate file exists
+      // Validate file accessibility first
+      console.log(`[StoryMode] Validating audio file accessibility`);
       const validator = audioValidator.current;
       const status = await validator.validateFile(absoluteUrl);
       if (!status.exists) {
-        throw new Error(`Audio not accessible${status.error ? `: ${status.error}` : ''}`);
-      }
-
-      // Check browser MP3 capability
-      const capabilityTest = document.createElement('audio');
-      const canPlayMp3 = capabilityTest.canPlayType('audio/mpeg');
-      if (!canPlayMp3) {
-        throw new Error('Browser cannot play MP3 format');
-      }
-
-      // Fetch audio as blob first
-      console.log('Fetching audio as blob...');
-      const response = await fetch(absoluteUrl, { 
-        cache: 'no-cache',
-        mode: 'cors'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`);
+        throw new Error(`Audio file not accessible: ${status.error || 'Unknown validation error'}`);
       }
       
-      const audioBlob = await response.blob();
-      console.log(`Audio blob loaded: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+      console.log(`[StoryMode] File validation passed, attempting multi-strategy loading`);
+
+      // Strategy 1: Try direct URL loading first (simpler, faster)
+      let audio: HTMLAudioElement;
+      let analysisResult: AudioAnalysisResult;
       
-      // Create blob URL for audio playback
-      const blobUrl = URL.createObjectURL(audioBlob);
-      
-      // Create and configure audio element
-      const audio = new Audio();
-      audio.crossOrigin = 'anonymous';
-      audio.preload = 'auto';
-      (audio as any).playsInline = true; // TypeScript workaround for mobile playback
-      audio.volume = volume;
-
-      // Test blob-based audio loading
-      const loadPromise = new Promise<void>((resolve, reject) => {
-        const onCanPlay = () => { 
-          console.log('Audio canplay event fired');
-          cleanup(); 
-          resolve(); 
-        };
-        const onLoadedMetadata = () => {
-          console.log(`Audio metadata loaded: duration=${audio.duration}s`);
-        };
-        const onError = () => {
-          const mediaError = audio.error;
-          const msg = mediaError
-            ? `Media error code ${mediaError.code}: ${getMediaErrorMessage(mediaError.code)}`
-            : 'Unknown media error';
-          console.error('Audio error:', msg);
-          cleanup();
-          reject(new Error(msg));
-        };
-        const onAbort = () => { 
-          console.warn('Audio loading was aborted');
-          cleanup(); 
-          reject(new Error('Audio loading was aborted')); 
-        };
-        
-        const cleanup = () => {
-          audio.removeEventListener('canplay', onCanPlay);
-          audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-          audio.removeEventListener('error', onError);
-          audio.removeEventListener('abort', onAbort);
-        };
-        
-        audio.addEventListener('canplay', onCanPlay, { once: true });
-        audio.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
-        audio.addEventListener('error', onError, { once: true });
-        audio.addEventListener('abort', onAbort, { once: true });
-      });
-
-      // Set blob URL and load
-      audio.src = blobUrl;
-      audio.load();
-
-      // Wait for audio to be ready with timeout
-      await Promise.race([
-        loadPromise,
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Audio loading timeout after 15 seconds')), 15000)
-        ),
-      ]);
-
-      // Analyze audio for beat detection
-      console.log('Analyzing audio for beats...');
-      const inferredType = audioBlob.type || 'audio/mpeg';
-      const audioFile = new File([audioBlob], `${stage.id}.mp3`, { type: inferredType });
-
-      let audioBuffer: AudioBuffer;
       try {
-        audioBuffer = await audioAnalyzer.current.loadAudioFile(audioFile);
-        console.log(`Audio buffer created: ${audioBuffer.duration}s, ${audioBuffer.sampleRate}Hz`);
-      } catch (e) {
-        throw new Error(`Audio decoding failed${e instanceof Error ? `: ${e.message}` : ''}`);
+        console.log(`[StoryMode] Attempting direct URL loading strategy`);
+        const { audio: directAudio, analysisResult: directAnalysis } = await loadAudioDirect(absoluteUrl, stage, isPreviewMode);
+        audio = directAudio;
+        analysisResult = directAnalysis;
+        console.log(`[StoryMode] Direct loading successful`);
+        
+      } catch (directError) {
+        console.warn(`[StoryMode] Direct loading failed, trying blob strategy:`, directError);
+        
+        // Strategy 2: Fallback to blob-based loading (more robust)
+        const { audio: blobAudio, analysisResult: blobAnalysis } = await loadAudioBlob(absoluteUrl, stage, isPreviewMode);
+        audio = blobAudio;
+        analysisResult = blobAnalysis;
+        console.log(`[StoryMode] Blob loading successful`);
       }
-      
-      const result = await audioAnalyzer.current.analyzeAudio(audioBuffer);
-      console.log(`Beat analysis complete: ${result.beats.length} beats detected`);
+
+      // Verify analysis result
+      if (!analysisResult.beats || analysisResult.beats.length === 0) {
+        console.warn(`[StoryMode] No beats detected in audio file`);
+      }
 
       // Store audio element and analysis
+      if (audioElement.current) {
+        audioElement.current.pause();
+        audioElement.current = null;
+      }
+      
       audioElement.current = audio;
-      setAnalysisResult(result);
+      setAnalysisResult(analysisResult);
       setCurrentStageIndex(stageIndex);
       setGamePhase('ready');
       
-      console.log(`Stage ${stage.name} loaded successfully`);
+      console.log(`[StoryMode] Stage ${stage.name} loaded successfully`);
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('Error loading stage:', errorMessage);
+      console.error(`[StoryMode] Failed to load stage ${stage.name}:`, errorMessage);
+      
+      let canRetry = true;
+      
+      // Determine if retry is likely to help
+      if (errorMessage.includes('not supported') || 
+          errorMessage.includes('invalid duration') || 
+          errorMessage.includes('corrupted') ||
+          errorMessage.includes('Browser cannot play')) {
+        canRetry = false;
+      }
+      
       setLoadError({
         stageName: stage.name,
         error: errorMessage,
-        canRetry: true
+        canRetry
       });
       setGamePhase('error');
     }
   }, [volume]);
+
+  // Strategy 1: Direct URL loading
+  const loadAudioDirect = async (url: string, stage: StoryStage, isPreviewMode: boolean): Promise<{ audio: HTMLAudioElement; analysisResult: AudioAnalysisResult }> => {
+    console.log(`[StoryMode] Direct loading: Creating audio element`);
+    
+    // Check browser MP3 capability first
+    const capabilityTest = document.createElement('audio');
+    const canPlayMp3 = capabilityTest.canPlayType('audio/mpeg');
+    if (!canPlayMp3) {
+      throw new Error('Browser cannot play MP3 format');
+    }
+    
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    (audio as any).playsInline = true; // TypeScript workaround for mobile playback
+    audio.preload = 'auto';
+    audio.volume = volume;
+    
+    // Load audio with promise-based error handling
+    await new Promise<void>((resolve, reject) => {
+      let isResolved = false;
+      
+      const handleSuccess = () => {
+        if (isResolved) return;
+        isResolved = true;
+        
+        if (isNaN(audio.duration) || audio.duration <= 0) {
+          reject(new Error('Audio has invalid duration'));
+          return;
+        }
+        
+        console.log(`[StoryMode] Direct audio loaded - duration: ${audio.duration}s`);
+        resolve();
+      };
+
+      const handleError = () => {
+        if (isResolved) return;
+        isResolved = true;
+        
+        const audioError = audio.error;
+        let errorMessage = 'Direct loading failed';
+        
+        if (audioError) {
+          errorMessage = `${getMediaErrorMessage(audioError.code)}`;
+        }
+        
+        reject(new Error(errorMessage));
+      };
+
+      audio.addEventListener('loadedmetadata', handleSuccess, { once: true });
+      audio.addEventListener('canplaythrough', handleSuccess, { once: true });
+      audio.addEventListener('error', handleError, { once: true });
+
+      // Timeout for direct loading
+      setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          reject(new Error('Direct loading timeout (5s)'));
+        }
+      }, 5000);
+
+      audio.src = url;
+      audio.load();
+    });
+
+    // Fetch audio for analysis
+    console.log(`[StoryMode] Direct loading: Fetching audio for analysis`);
+    const response = await fetch(url, { 
+      cache: 'no-cache',
+      mode: 'cors'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Analysis fetch failed: ${response.status}`);
+    }
+    
+    const audioBlob = await response.blob();
+    const audioFile = new File([audioBlob], `${stage.id}.mp3`, { type: audioBlob.type || 'audio/mpeg' });
+
+    const audioBuffer = await audioAnalyzer.current!.loadAudioFile(audioFile);
+    const analysisResult = await audioAnalyzer.current!.analyzeAudio(audioBuffer);
+    
+    console.log(`[StoryMode] Direct loading analysis complete: ${analysisResult.beats.length} beats`);
+    
+    return { audio, analysisResult };
+  };
+
+  // Strategy 2: Blob-based loading (fallback)
+  const loadAudioBlob = async (url: string, stage: StoryStage, isPreviewMode: boolean): Promise<{ audio: HTMLAudioElement; analysisResult: AudioAnalysisResult }> => {
+    console.log(`[StoryMode] Blob loading: Fetching audio as blob`);
+    
+    // Fetch audio as blob with enhanced headers
+    const response = await fetch(url, { 
+      cache: 'no-cache',
+      mode: 'cors',
+      headers: {
+        'Accept': 'audio/mpeg, audio/*',
+        'Range': 'bytes=0-'  // Request full file
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Blob fetch failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    console.log(`[StoryMode] Blob response - Content-Type: ${contentType}`);
+    
+    const audioBlob = await response.blob();
+    console.log(`[StoryMode] Blob created - size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+    
+    if (audioBlob.size === 0) {
+      throw new Error('Audio file is empty (0 bytes)');
+    }
+
+    // Create blob URL for playback
+    const blobUrl = URL.createObjectURL(audioBlob);
+    console.log(`[StoryMode] Blob URL created: ${blobUrl}`);
+    
+    try {
+      // Create audio element for blob playback
+      const audio = new Audio();
+      audio.crossOrigin = 'anonymous';
+      (audio as any).playsInline = true; // TypeScript workaround for mobile playback
+      audio.preload = 'auto';
+      audio.volume = volume;
+
+      // Load audio from blob URL
+      await new Promise<void>((resolve, reject) => {
+        let isResolved = false;
+        
+        const cleanup = () => {
+          if (blobUrl) URL.revokeObjectURL(blobUrl);
+        };
+
+        const handleSuccess = () => {
+          if (isResolved) return;
+          isResolved = true;
+          
+          if (isNaN(audio.duration) || audio.duration <= 0) {
+            cleanup();
+            reject(new Error('Blob audio has invalid duration'));
+            return;
+          }
+          
+          console.log(`[StoryMode] Blob audio loaded - duration: ${audio.duration}s`);
+          resolve();
+        };
+
+        const handleError = () => {
+          if (isResolved) return;
+          isResolved = true;
+          cleanup();
+          
+          const audioError = audio.error;
+          let errorMessage = 'Blob audio loading failed';
+          if (audioError) {
+            errorMessage = `${getMediaErrorMessage(audioError.code)}`;
+          }
+          reject(new Error(errorMessage));
+        };
+
+        audio.addEventListener('loadedmetadata', handleSuccess, { once: true });
+        audio.addEventListener('canplaythrough', handleSuccess, { once: true });
+        audio.addEventListener('error', handleError, { once: true });
+
+        // Timeout for blob loading
+        setTimeout(() => {
+          if (!isResolved) {
+            isResolved = true;
+            cleanup();
+            reject(new Error('Blob loading timeout (8s)'));
+          }
+        }, 8000);
+
+        audio.src = blobUrl;
+        audio.load();
+      });
+
+      // Analyze audio from blob
+      console.log(`[StoryMode] Blob loading: Analyzing audio`);
+      const audioFile = new File([audioBlob], `${stage.id}.mp3`, { type: audioBlob.type || 'audio/mpeg' });
+      
+      const audioBuffer = await audioAnalyzer.current!.loadAudioFile(audioFile);
+      const analysisResult = await audioAnalyzer.current!.analyzeAudio(audioBuffer);
+      
+      console.log(`[StoryMode] Blob analysis complete: ${analysisResult.beats.length} beats`);
+      
+      return { audio, analysisResult };
+      
+    } catch (error) {
+      // Clean up blob URL on error
+      URL.revokeObjectURL(blobUrl);
+      throw error;
+    }
+  };
 
   // Helper function to get readable error messages
   const getMediaErrorMessage = (code: number): string => {
