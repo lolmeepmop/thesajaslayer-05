@@ -1,3 +1,5 @@
+import { createAudioUrl } from '../utils/audioUrl';
+
 export interface Song {
   id: string;
   name: string;
@@ -8,6 +10,7 @@ export interface Song {
   genre?: string;
   estimatedDuration?: string;
   difficulty?: 'Easy' | 'Medium' | 'Hard';
+  getAudioUrl?: () => string;
 }
 
 export const SONG_BANK: Song[] = [
@@ -20,7 +23,8 @@ export const SONG_BANK: Song[] = [
     category: 'stage',
     genre: 'K-pop',
     estimatedDuration: '3:24',
-    difficulty: 'Easy'
+    difficulty: 'Easy',
+    getAudioUrl: () => createAudioUrl('Stage 1 Watch This (우릴 봐).mp3')
   },
   {
     id: 'stage2',
@@ -31,7 +35,8 @@ export const SONG_BANK: Song[] = [
     category: 'stage',
     genre: 'Electronic',
     estimatedDuration: '4:02',
-    difficulty: 'Medium'
+    difficulty: 'Medium',
+    getAudioUrl: () => createAudioUrl('Stage 2 Darkside Rewind.mp3')
   },
   {
     id: 'stage3',
@@ -42,7 +47,8 @@ export const SONG_BANK: Song[] = [
     category: 'stage',
     genre: 'Synthwave',
     estimatedDuration: '3:45',
-    difficulty: 'Medium'
+    difficulty: 'Medium',
+    getAudioUrl: () => createAudioUrl('Stage 3 Voltage_.mp3')
   },
   {
     id: 'stage4',
@@ -53,7 +59,8 @@ export const SONG_BANK: Song[] = [
     category: 'stage',
     genre: 'Dance',
     estimatedDuration: '3:18',
-    difficulty: 'Hard'
+    difficulty: 'Hard',
+    getAudioUrl: () => createAudioUrl('Stage 4 Sport light fever.mp3')
   },
   {
     id: 'stage5',
@@ -64,7 +71,8 @@ export const SONG_BANK: Song[] = [
     category: 'stage',
     genre: 'K-pop',
     estimatedDuration: '3:55',
-    difficulty: 'Medium'
+    difficulty: 'Medium',
+    getAudioUrl: () => createAudioUrl('Stage 5 너만 보여 (Only You).mp3')
   },
   {
     id: 'stage6',
@@ -75,7 +83,8 @@ export const SONG_BANK: Song[] = [
     category: 'stage',
     genre: 'Electronic',
     estimatedDuration: '4:12',
-    difficulty: 'Hard'
+    difficulty: 'Hard',
+    getAudioUrl: () => createAudioUrl('Stage 6 Off Gaurd_.mp3')
   },
   {
     id: 'stage7',
@@ -86,7 +95,8 @@ export const SONG_BANK: Song[] = [
     category: 'stage',
     genre: 'Electronic',
     estimatedDuration: '3:33',
-    difficulty: 'Hard'
+    difficulty: 'Hard',
+    getAudioUrl: () => createAudioUrl('Stage 7 BANG!.mp3')
   },
   {
     id: 'bonus1',
@@ -97,7 +107,8 @@ export const SONG_BANK: Song[] = [
     category: 'bonus',
     genre: 'K-pop',
     estimatedDuration: '2:58',
-    difficulty: 'Easy'
+    difficulty: 'Easy',
+    getAudioUrl: () => createAudioUrl('Bonus Room 1 Nope! (안 돼!).mp3')
   },
   {
     id: 'bonus2',
@@ -108,6 +119,7 @@ export const SONG_BANK: Song[] = [
     category: 'bonus',
     genre: 'Electronic',
     estimatedDuration: '3:41',
-    difficulty: 'Medium'
+    difficulty: 'Medium',
+    getAudioUrl: () => createAudioUrl('Bonus Stage 2 Sugar Crush_.mp3')
   }
 ];

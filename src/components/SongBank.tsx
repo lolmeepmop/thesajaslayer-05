@@ -151,7 +151,7 @@ export const SongBank: React.FC<SongBankProps> = ({ onSongSelected, onBack, diff
                   {/* Preview button */}
                   <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <SongPreview
-                      musicUrl={song.musicUrl}
+                      musicUrl={song.getAudioUrl ? song.getAudioUrl() : song.musicUrl}
                       isPlaying={currentPreviewSong === song.id}
                       onPlayToggle={() => handlePreviewToggle(song.id)}
                       className="bg-background/80 backdrop-blur-sm text-foreground hover:bg-background"

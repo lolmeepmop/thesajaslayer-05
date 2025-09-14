@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Volume2, VolumeX, Upload } from 'lucide-react';
 import { DifficultySelector } from './DifficultySelector';
 import { DifficultyLevel } from '../types/difficulty';
+import { createAudioUrl } from '../utils/audioUrl';
 
 interface LandingPageProps {
   onStartSongBank: () => void;
@@ -18,7 +19,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
 
   useEffect(() => {
     // Initialize background music
-    const audio = new Audio('/start%20page%20audio%202.mp3');
+    const audio = new Audio(createAudioUrl('start page audio 2.mp3'));
     audio.loop = true;
     audio.volume = 0.3;
     audioRef.current = audio;
