@@ -38,7 +38,6 @@ interface RhythmGameProps {
     name: string;
     musicUrl: string;
     imagePath?: string;
-    getAudioUrl?: () => string;
   };
 }
 
@@ -101,12 +100,18 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
     try {
       setGamePhase('analyzing');
       
-      // Use the song's getAudioUrl method if available, otherwise fallback to musicUrl
-      const audioUrl = preselectedSong.getAudioUrl ? preselectedSong.getAudioUrl() : preselectedSong.musicUrl;
-      const response = await fetch(audioUrl);
+      // Try local URL first, then fallback to GitHub if needed
+      let audioUrl = preselectedSong.musicUrl;
+      let response = await fetch(audioUrl);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch audio from: ${audioUrl}`);
+        // Fallback to GitHub assets if local file not found
+        const githubBase = import.meta.env.VITE_SONG_ASSETS_BASE;
+        if (githubBase) {
+          audioUrl = `${githubBase}/${preselectedSong.musicUrl}`;
+          response = await fetch(audioUrl);
+        }
+        if (!response.ok) throw new Error('Failed to fetch audio from both local and GitHub');
       }
       
       const blob = await response.blob();
