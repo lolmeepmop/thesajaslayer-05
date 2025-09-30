@@ -5,11 +5,11 @@ import { DifficultySelector } from './DifficultySelector';
 import { DifficultyLevel } from '../types/difficulty';
 
 interface LandingPageProps {
-  onStartSongBank: () => void;
+  onStartStoryMode: () => void;
   onStartFreeplay: (difficulty: DifficultyLevel) => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onStartFreeplay }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onStartStoryMode, onStartFreeplay }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showFreeplayMode, setShowFreeplayMode] = useState(false);
@@ -18,7 +18,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
 
   useEffect(() => {
     // Initialize background music
-    const audio = new Audio('/start%20page%20audio%202.mp3');
+    const audio = new Audio('/start-page-audio-2.mp3');
     audio.loop = true;
     audio.volume = 0.3;
     audioRef.current = audio;
@@ -63,11 +63,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
     }
   };
 
-  const handleStartSongBank = () => {
+  const handleStartStoryMode = () => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
-    onStartSongBank();
+    onStartStoryMode();
   };
 
   const handleStartFreeplay = () => {
@@ -108,13 +108,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
         onClick={() => setShowFreeplayMode(!showFreeplayMode)}
       >
         <Upload className="h-4 w-4 mr-2" />
-        {showFreeplayMode ? 'Back to Song Bank' : 'Upload a Song'}
+        {showFreeplayMode ? 'Back to Story Mode' : 'Upload a Song'}
       </Button>
 
       {/* Main content */}
       <div className={`relative z-10 text-center transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {!showFreeplayMode ? (
-          // Song Bank Interface
+          // Story Mode Interface
           <div className="space-y-8">
             {/* Title with animated neon gradient */}
             <div className="space-y-4">
@@ -135,7 +135,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
             <div className="synthwave-narrative max-w-2xl mx-auto space-y-2 text-lg">
               <p>Battle through cursed rhythms and corrupted solos.</p>
               <p>You are Nova, the last sync slayer!</p>
-              <p>Only you can restore harmony to the all the stages.</p>
+              <p>Only you can restore harmony to the seven stages.</p>
             </div>
 
             {/* Start button with synthwave styling */}
@@ -143,9 +143,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartSongBank, onSta
               <Button
                 size="lg"
                 className="synthwave-button text-xl px-12 py-6"
-                onClick={handleStartSongBank}
+                onClick={handleStartStoryMode}
               >
-                EXPLORE SONG BANK
+                START STORY MODE
               </Button>
               <p className="text-sm text-electric-lavender/70 font-mono">
                 * This is a fan-made game

@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Home, Volume2, Settings } from 'lucide-react';
+import { Play, Pause, RotateCcw, Home, Volume2, BookOpen, Settings } from 'lucide-react';
 import { FileUpload } from './FileUpload';
 import { GameCanvas } from './GameCanvas';
 import { BackgroundSelector } from './BackgroundSelector';
-
+import { StoryMode } from './StoryMode';
 import { PauseMenu } from './PauseMenu';
 import { GameSettingsPanel } from './GameSettingsPanel';
 import { PerformanceMonitor } from './PerformanceMonitor';
@@ -21,7 +21,7 @@ import { CalibrationData, DEFAULT_CALIBRATION } from '../types/calibration';
 import { trackPlayEvent } from '@/integrations/supabase/analytics';
 
 type GamePhase = 'upload' | 'analyzing' | 'ready' | 'playing' | 'paused' | 'ended';
-type GameMode = 'freeplay';
+type GameMode = 'freeplay' | 'story';
 
 interface GameStats {
   score: number;
@@ -33,16 +33,9 @@ interface GameStats {
 
 interface RhythmGameProps {
   difficulty?: DifficultyLevel;
-  preselectedSong?: {
-    id: string;
-    name: string;
-    musicUrl: string;
-    imagePath?: string;
-  };
-  onBack?: () => void;
 }
 
-export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', preselectedSong, onBack }) => {
+export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium' }) => {
   const [gameMode, setGameMode] = useState<GameMode>('freeplay');
   const [gamePhase, setGamePhase] = useState<GamePhase>('upload');
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -82,66 +75,12 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
   // Initialize audio analyzer
   useEffect(() => {
     audioAnalyzer.current = new AudioAnalyzer();
-    
-    // Auto-load preselected song if provided
-    if (preselectedSong) {
-      handlePreselectedSong();
-    }
-    
     return () => {
       if (audioAnalyzer.current) {
         audioAnalyzer.current.stopAudio();
       }
     };
   }, []);
-
-  const handlePreselectedSong = async () => {
-    if (!preselectedSong) return;
-    
-    try {
-      setGamePhase('analyzing');
-      
-      // Try local URL first, then fallback to GitHub if needed
-      let audioUrl = preselectedSong.musicUrl;
-      let response = await fetch(audioUrl);
-      
-      if (!response.ok) {
-        // Fallback to GitHub assets if local file not found
-        const githubBase = import.meta.env.VITE_SONG_ASSETS_BASE;
-        if (githubBase) {
-          audioUrl = `${githubBase}/${preselectedSong.musicUrl}`;
-          response = await fetch(audioUrl);
-        }
-        if (!response.ok) throw new Error('Failed to fetch audio from both local and GitHub');
-      }
-      
-      const blob = await response.blob();
-      const file = new File([blob], `${preselectedSong.name}.mp3`, { type: 'audio/mpeg' });
-      
-      // Load and analyze audio
-      const audioBuffer = await audioAnalyzer.current!.loadAudioFile(file);
-      const analysis = await audioAnalyzer.current!.analyzeAudio(audioBuffer);
-      
-      // Create audio element for playback
-      const audioObjectUrl = URL.createObjectURL(file);
-      const audio = new Audio(audioObjectUrl);
-      audio.volume = volume;
-      audioElement.current = audio;
-      
-      setAnalysisResult(analysis);
-      setAudioFile(file);
-      
-      // Set background image if available
-      if (preselectedSong.imagePath) {
-        setSelectedBackground(preselectedSong.imagePath);
-      }
-      
-      setGamePhase('ready');
-    } catch (error) {
-      console.error('Error loading preselected song:', error);
-      setGamePhase('upload'); // Fall back to upload mode
-    }
-  };
 
   // Handle file upload and analysis
   const handleFileUpload = useCallback(async (file: File) => {
@@ -393,6 +332,10 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
     }
   }, [gamePhase, gameMode, selectedBackground, difficulty]);
 
+  // Story mode
+  if (gameMode === 'story') {
+    return <StoryMode onExitStoryMode={() => setGameMode('freeplay')} difficulty={difficulty} />;
+  }
 
   // Upload phase
   if (gamePhase === 'upload' || gamePhase === 'analyzing') {
@@ -407,11 +350,21 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
           </div>
         </div>
         
+        {/* Story Mode Button */}
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            onClick={() => setGameMode('story')}
+            className="cosmic-button"
+            size="sm"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Story Mode
+          </Button>
+        </div>
 
         <FileUpload 
           onFileSelect={handleFileUpload}
           isProcessing={gamePhase === 'analyzing'}
-          onBack={onBack}
         />
       </div>
     );
@@ -481,7 +434,7 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
       <div className="absolute bottom-4 left-4 right-4 flex justify-center items-center gap-4 z-10">
         <div className="cosmic-card p-4 bg-card/80 backdrop-blur flex items-center gap-4">
           <Button
-            onClick={onBack || returnToUpload}
+            onClick={returnToUpload}
             variant="outline"
             size="sm"
             className="cosmic-button"

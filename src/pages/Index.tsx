@@ -1,31 +1,23 @@
 import React, { useState } from 'react';
 import { RhythmGame } from '../components/RhythmGame';
-import { SongBank } from '../components/SongBank';
+import { StoryMode } from '../components/StoryMode';
 import { LandingPage } from '../components/LandingPage';
-import { DifficultySelector } from '../components/DifficultySelector';
+import { StoryDifficultySelector } from '../components/StoryDifficultySelector';
 import { DifficultyLevel } from '../types/difficulty';
-import { Song } from '../types/song';
 
-type AppMode = 'landing' | 'song-bank' | 'difficulty-select' | 'song-game' | 'freeplay';
+type AppMode = 'landing' | 'story' | 'freeplay' | 'story-difficulty';
 
 const Index = () => {
   const [currentMode, setCurrentMode] = useState<AppMode>('landing');
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('medium');
-  const [selectedSong, setSelectedSong] = useState<Song | null>(null);
 
-  const handleStartSongBank = () => {
-    setCurrentMode('difficulty-select');
+  const handleStartStoryMode = () => {
+    setCurrentMode('story-difficulty');
   };
 
-  const handleDifficultySelected = (difficulty: DifficultyLevel) => {
+  const handleStoryDifficultySelected = (difficulty: DifficultyLevel) => {
     setSelectedDifficulty(difficulty);
-    setCurrentMode('song-bank');
-  };
-
-  const handleSongSelected = (song: Song, difficulty: DifficultyLevel) => {
-    setSelectedSong(song);
-    setSelectedDifficulty(difficulty);
-    setCurrentMode('song-game');
+    setCurrentMode('story');
   };
 
   const handleStartFreeplay = (difficulty: DifficultyLevel) => {
@@ -40,66 +32,27 @@ const Index = () => {
   if (currentMode === 'landing') {
     return (
       <LandingPage 
-        onStartSongBank={handleStartSongBank}
+        onStartStoryMode={handleStartStoryMode}
         onStartFreeplay={handleStartFreeplay}
       />
     );
   }
 
-  if (currentMode === 'difficulty-select') {
-    return (
-      <div 
-        className="min-h-screen flex items-center justify-center relative"
-        style={{
-          backgroundImage: `url('/lovable-uploads/b5e657df-0271-4657-b1eb-3998fe0409b6.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-        <div className="relative z-10 text-center space-y-8">
-          <h1 className="synthwave-title text-4xl md:text-6xl">
-            SELECT DIFFICULTY
-          </h1>
-          <div className="max-w-md mx-auto">
-            <DifficultySelector
-              selectedDifficulty={selectedDifficulty}
-              onDifficultyChange={handleDifficultySelected}
-            />
-          </div>
-        </div>
-      </div>
-    );
+  if (currentMode === 'story') {
+    return <StoryMode onExitStoryMode={handleExitToLanding} difficulty={selectedDifficulty} />;
   }
 
-  if (currentMode === 'song-bank') {
+  if (currentMode === 'story-difficulty') {
     return (
-      <SongBank
-        onSongSelected={handleSongSelected}
+      <StoryDifficultySelector
         onBack={handleExitToLanding}
-        difficulty={selectedDifficulty}
-      />
-    );
-  }
-
-  if (currentMode === 'song-game' && selectedSong) {
-    return (
-      <RhythmGame 
-        difficulty={selectedDifficulty} 
-        preselectedSong={selectedSong}
-        onBack={() => setCurrentMode('song-bank')}
+        onStartStory={handleStoryDifficultySelected}
       />
     );
   }
 
   if (currentMode === 'freeplay') {
-    return (
-      <RhythmGame 
-        difficulty={selectedDifficulty}
-        onBack={() => setCurrentMode('landing')}
-      />
-    );
+    return <RhythmGame difficulty={selectedDifficulty} />;
   }
 
   return null;
