@@ -39,9 +39,10 @@ interface RhythmGameProps {
     musicUrl: string;
     imagePath?: string;
   };
+  onBack?: () => void;
 }
 
-export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', preselectedSong }) => {
+export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', preselectedSong, onBack }) => {
   const [gameMode, setGameMode] = useState<GameMode>('freeplay');
   const [gamePhase, setGamePhase] = useState<GamePhase>('upload');
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -410,6 +411,7 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
         <FileUpload 
           onFileSelect={handleFileUpload}
           isProcessing={gamePhase === 'analyzing'}
+          onBack={onBack}
         />
       </div>
     );
@@ -479,7 +481,7 @@ export const RhythmGame: React.FC<RhythmGameProps> = ({ difficulty = 'medium', p
       <div className="absolute bottom-4 left-4 right-4 flex justify-center items-center gap-4 z-10">
         <div className="cosmic-card p-4 bg-card/80 backdrop-blur flex items-center gap-4">
           <Button
-            onClick={returnToUpload}
+            onClick={onBack || returnToUpload}
             variant="outline"
             size="sm"
             className="cosmic-button"
