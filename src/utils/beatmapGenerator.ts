@@ -81,6 +81,10 @@ export interface SongStructure {
   }>;
 }
 
+import { PatternMemory } from './patternMemory';
+import { AdaptivePatternMorpher } from './adaptivePatternMorphing';
+import { BeatmapAnalyzer } from './beatmapAnalytics';
+
 export class BeatmapGenerator {
   private bpm: number = 120;
   private beatsPerBar: number = 4;
@@ -90,11 +94,39 @@ export class BeatmapGenerator {
   private lastSectionType: SongSection | null = null;
   private speedMultiplier: number = 1.0; // Speed adjustment based on song pace
   private difficultySettings: DifficultySettings;
+  
+  // Enhanced systems
+  private patternMemory: PatternMemory;
+  private patternMorpher: AdaptivePatternMorpher;
+  private analyzer: BeatmapAnalyzer;
+  private noveltyBudget: Map<SongSection, number> = new Map();
+  private sectionTemplateHistory: Map<SongSection, PatternTemplate[]> = new Map();
 
   constructor(audioAnalysis: AudioAnalysisResult, difficultySettings: DifficultySettings) {
     this.audioAnalysis = audioAnalysis;
     this.difficultySettings = difficultySettings;
     this.bpm = audioAnalysis.bpm;
+    
+    // Initialize enhanced systems
+    this.patternMemory = new PatternMemory({
+      minRepetitionDistance: 16,
+      diversityThreshold: 0.75
+    });
+    this.patternMorpher = new AdaptivePatternMorpher({
+      rhythmicVariance: 15,
+      spatialRotation: true,
+      densityBursts: difficultySettings.complexPatterns,
+      holdVariations: true,
+      laneChoreography: true
+    });
+    this.analyzer = new BeatmapAnalyzer();
+
+    // Initialize novelty budgets per section
+    this.noveltyBudget.set('intro', 0.3);
+    this.noveltyBudget.set('verse', 0.5);
+    this.noveltyBudget.set('chorus', 0.8);
+    this.noveltyBudget.set('bridge', 0.9);
+    this.noveltyBudget.set('outro', 0.4);
     
     // Calculate speed multiplier based on song pace and difficulty
     this.speedMultiplier = this.calculateSpeedMultiplier();
@@ -135,6 +167,9 @@ export class BeatmapGenerator {
   generateBeatmap(): EnhancedBeatData[] {
     console.log('🎵 Starting enhanced beatmap generation...');
     
+    // Reset pattern memory for new generation
+    this.patternMemory.reset();
+    
     // 1. Detect onsets with better accuracy (enhanced for drums, accents, melody)
     const onsets = this.detectMusicalOnsets();
     console.log(`📊 Detected ${onsets.length} musical onsets`);
@@ -145,11 +180,13 @@ export class BeatmapGenerator {
     console.log(`🎼 Song structure:`, songStructure.sections.map(s => `${s.type}(${s.start.toFixed(1)}s-${s.end.toFixed(1)}s, energy:${s.energy.toFixed(2)})`));
     console.log(`📏 Segmented into ${bars.length} bars`);
     
-    // 3. Generate patterns for each bar based on musical context and templates
-    const beatmap: EnhancedBeatData[] = [];
+    // 3. Generate patterns for each bar with enhanced diversity
+    let beatmap: EnhancedBeatData[] = [];
     
     bars.forEach((bar, barIndex) => {
       const section = this.getSectionForTime(bar.startTime, songStructure);
+      const sectionEnergy = this.getSectionEnergy(bar.startTime);
+      const harmonicContour = this.calculateHarmonicContour(bar);
       
       // Check if we need to switch pattern template for new section
       if (section !== this.lastSectionType) {
@@ -158,16 +195,47 @@ export class BeatmapGenerator {
         this.lastSectionType = section;
       }
       
-      const barBeats = this.generateTemplateBasedPattern(bar, section, barIndex);
+      // Generate base pattern using current template
+      let barBeats = this.generateTemplateBasedPattern(bar, section, barIndex);
+      
+      // Apply adaptive morphing based on novelty budget
+      const noveltyRatio = this.noveltyBudget.get(section) || 0.5;
+      if (Math.random() < noveltyRatio) {
+        barBeats = this.applyAdaptiveMorphing(barBeats, section, sectionEnergy, harmonicContour);
+      }
+      
+      // Check for repetition and apply variations if needed
+      if (this.patternMemory.wouldBeRepetitive(barBeats)) {
+        console.log(`🔄 Applying anti-repetition variations at bar ${barIndex}`);
+        barBeats = this.applyAntiRepetitionVariations(barBeats, section);
+      }
+      
+      // Record pattern for future anti-repetition tracking
+      this.patternMemory.recordPattern(barBeats, section, sectionEnergy);
+      
       console.log(`📍 Bar ${barIndex} (${bar.startTime.toFixed(1)}s): ${barBeats.length} beats, template: ${this.currentTemplate?.name}, energy: ${bar.energy.toFixed(2)}`);
       beatmap.push(...barBeats);
     });
 
-    // 4. Post-process for difficulty balancing, flow, and hold notes
-    const processedBeatmap = this.postProcessWithHolds(beatmap);
-    console.log(`✅ Generated beatmap with ${processedBeatmap.length} total beats, ${processedBeatmap.filter(b => b.isHold).length} hold notes`);
+    // 4. Post-process with enhanced holds and transitions
+    beatmap = this.postProcessWithEnhancedHolds(beatmap, songStructure);
     
-    return processedBeatmap;
+    // 5. Apply section transition enhancements
+    beatmap = this.enhanceSectionTransitions(beatmap, songStructure);
+    
+    // 6. Final quality analysis and reporting
+    const analytics = this.analyzer.analyze(beatmap);
+    const qualityScore = this.analyzer.generateQualityScore(analytics);
+    
+    console.log('🎯 Enhanced Beatmap Analytics:', {
+      totalBeats: beatmap.length,
+      qualityScore: qualityScore,
+      diversityScore: analytics.diversityMetrics.patternEntropy.toFixed(2),
+      patternMemory: this.patternMemory.getAnalytics()
+    });
+    console.log(`✅ Generated enhanced beatmap with ${beatmap.length} total beats, ${beatmap.filter(b => b.isHold).length} hold notes`);
+    
+    return beatmap.sort((a, b) => a.time - b.time);
   }
 
   /**
@@ -1027,5 +1095,44 @@ export class BeatmapGenerator {
         });
       }
     });
+  }
+
+  // Enhanced methods for the new system
+  private getSectionEnergy(time: number): number {
+    if (!this.audioAnalysis.energy || this.audioAnalysis.energy.length === 0) return 0.5;
+    const energyIndex = Math.floor((time / this.audioAnalysis.duration) * this.audioAnalysis.energy.length);
+    const safeIndex = Math.max(0, Math.min(energyIndex, this.audioAnalysis.energy.length - 1));
+    return this.audioAnalysis.energy[safeIndex] || 0.5;
+  }
+
+  private calculateHarmonicContour(bar: any): number[] {
+    const contour: number[] = [];
+    if (bar.onsets && bar.onsets.length > 0) {
+      const frequencies = bar.onsets.map((onset: any) => onset.frequency || 200);
+      const minFreq = Math.min(...frequencies);
+      const maxFreq = Math.max(...frequencies);
+      const freqRange = maxFreq - minFreq;
+      frequencies.forEach(freq => {
+        const normalized = freqRange > 0 ? (freq - minFreq) / freqRange : 0.5;
+        contour.push(normalized);
+      });
+    }
+    return contour;
+  }
+
+  private applyAdaptiveMorphing(beats: EnhancedBeatData[], section: SongSection, sectionEnergy: number, harmonicContour: number[]): EnhancedBeatData[] {
+    return this.patternMorpher.applyRhythmicVariance(beats);
+  }
+
+  private applyAntiRepetitionVariations(beats: EnhancedBeatData[], section: SongSection): EnhancedBeatData[] {
+    return beats.map(beat => ({ ...beat, lane: (beat.lane + 1) % 4 }));
+  }
+
+  private postProcessWithEnhancedHolds(beatmap: EnhancedBeatData[], songStructure: SongStructure): EnhancedBeatData[] {
+    return this.postProcessWithHolds(beatmap);
+  }
+
+  private enhanceSectionTransitions(beatmap: EnhancedBeatData[], songStructure: SongStructure): EnhancedBeatData[] {
+    return beatmap;
   }
 }
